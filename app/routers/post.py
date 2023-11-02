@@ -3,7 +3,7 @@ from fastapi import Response, status, HTTPException, Depends, APIRouter
 from app import models, schemas
 from app.database import get_db
 from .. import oauth2
-from typing import List
+from typing import List, Optional
 
 router = APIRouter(
     prefix="/posts",
@@ -11,10 +11,12 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=List[schemas.PostResponse])
-def get_posts(db: Session = Depends(get_db)):
+def get_posts(db: Session = Depends(get_db), 
+              limit: int = 10, skip: int = 0, search: Optional[str] = ""):
     # cursor.execute("""SELECT * FROM posts""")
     # posts = cursor.fetchall()
-    posts = db.query(models.Post).all()
+
+    posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
     return posts
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse)
